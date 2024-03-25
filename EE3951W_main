@@ -1,0 +1,84 @@
+#include "xc.h"
+#include <stdio.h>
+#include "bolto092_lab6_circbuffer.h"
+#include "bolto092_lab5code.h"
+// CW1: FLASH CONFIGURATION WORD 1 (see PIC24 Family Reference Manual 24.1)
+#pragma config ICS = PGx1          // Comm Channel Select (Emulator EMUC1/EMUD1 pins are shared with PGC1/PGD1)
+#pragma config FWDTEN = OFF        // Watchdog Timer Enable (Watchdog Timer is disabled)
+#pragma config GWRP = OFF          // General Code Segment Write Protect (Writes to program memory are allowed)
+#pragma config GCP = OFF           // General Code Segment Code Protect (Code protection is disabled)
+#pragma config JTAGEN = OFF        // JTAG Port Enable (JTAG port is disabled)
+
+
+// CW2: FLASH CONFIGURATION WORD 2 (see PIC24 Family Reference Manual 24.1)
+#pragma config I2C1SEL = PRI       // I2C1 Pin Location Select (Use default SCL1/SDA1 pins)
+#pragma config IOL1WAY = OFF       // IOLOCK Protection (IOLOCK may be changed via unlocking seq)
+#pragma config OSCIOFNC = ON       // Primary Oscillator I/O Function (CLKO/RC15 functions as I/O pin)
+#pragma config FCKSM = CSECME      // Clock Switching and Monitor (Clock switching is enabled, 
+                                       // Fail-Safe Clock Monitor is enabled)
+#pragma config FNOSC = FRCPLL      // Oscillator Select (Fast RC Oscillator with PLL module (FRCPLL))
+
+void setup(void)
+{
+    CLKDIVbits.RCDIV = 0;  //Set RCDIV=1:1 (default 2:1) 32MHz or FCY/2=16M
+    AD1PCFG = 0x9fff;
+    //TRISB = 0x0003;
+    //LATB = 0xF3FF;        
+    
+    I2C2BRG = 0x9D;
+    I2C2CONbits.I2CEN = 1;
+    I2C2CONbits.I2CSIDL = 0;
+    IFS3bits.MI2C2IF = 0;
+    
+    lcd_init();
+    initBuffer();
+    
+    TMR3 = 0;
+    T3CON = 0;
+    _T3IF = 0;
+    T3CONbits.TCKPS = 0b10;
+    PR3 = 15625;
+    T3CONbits.TON = 1;
+    
+    TRISAbits.TRISA0 = 1;
+    AD1PCFGbits.PCFG0 = 0;
+    AD1CON2bits.VCFG = 0;
+    AD1CON3bits.ADCS = 1;
+    AD1CON3bits.ADRC = 0;
+    AD1CON1bits.SSRC = 2;
+    AD1CON3bits.SAMC = 0b1;
+    AD1CON1bits.FORM = 0b00;
+    AD1CON1bits.ASAM = 1;
+    AD1CON2bits.SMPI = 0; 
+    AD1CON1bits.ADON = 1 ;
+    AD1CHS = 0;
+    
+    IFS0bits.T1IF = 0;
+    T1CONbits.TCKPS = 0b10; 
+    IEC0bits.T1IE = 1;
+    T1CONbits.TON = 1;
+    PR1 = 24999;
+    IEC0bits.AD1IE = 1;
+            
+}
+
+void __attribute__((__interrupt__, __auto_psv__)) _ADC1Interrupt(void) {
+    IFS0bits.AD1IF = 0; 
+    putVal(ADC1BUF0); 
+}
+
+void __attribute__((__interrupt__,__auto_psv__)) _T1Interrupt(void)
+{
+    IFS0bits.T1IF = 0; 
+    TMR2 = 0;
+    char string[10] = {0};
+    sprintf(string, "%6.4f V", (3.3 / 1023) * getAvg());
+    
+    lcd_printStr(string);    
+}
+
+int main(void){
+    setup();
+    while(1);
+    return;
+}
