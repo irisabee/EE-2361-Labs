@@ -62,6 +62,8 @@ void setup(void)
             
 }
 
+int temp[100] = 0;
+
  int num_data_points = sizeof(temp)/sizeof(temp[0]);
 
 float ConvertToCelsius(float mv_input) { //convert mv to celsius based on table 
