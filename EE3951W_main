@@ -64,7 +64,7 @@ void setup(void)
 
  int num_data_points = sizeof(temp)/sizeof(temp[0]);
 
-float convertToCelsius(float mv_input) { //convert mv to celsius based on table 
+float ConvertToCelsius(float mv_input) { //convert mv to celsius based on table 
     int i;
     float result;
 
@@ -94,7 +94,8 @@ float convertToCelsius(float mv_input) { //convert mv to celsius based on table
 
 void __attribute__((__interrupt__, __auto_psv__)) _ADC1Interrupt(void) {
     IFS0bits.AD1IF = 0; 
-    putVal(ADC1BUF0); 
+    ConvertToCelsius(ADC1BUF0);
+    putVal(result); 
 }
 
 void __attribute__((__interrupt__,__auto_psv__)) _T1Interrupt(void)
