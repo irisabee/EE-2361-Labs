@@ -62,6 +62,36 @@ void setup(void)
             
 }
 
+ int num_data_points = sizeof(temp)/sizeof(temp[0]);
+
+float convertToCelsius(float mv_input) { //convert mv to celsius based on table 
+    int i;
+    float result;
+
+      if (mv_input < mv[0]) {/ /check if it is in range 
+        return temp[0];
+    } else if (mv_input > mv[num_data_points - 1]) {
+        return temp[num_data_points - 1];
+    }
+
+    // find the corresponding temperature
+    for (i = 1; i < num_data_points; i++) {
+        if (mv_input <= mv[i]) {
+            // Check which temperature is closer
+            if ((mv_input - mv[i - 1]) < (mv[i] - mv_input)) {
+                result = temp[i - 1];
+            } else {
+                result = temp[i];
+            }
+            break;
+        }
+    }
+
+
+    return result;
+}
+
+
 void __attribute__((__interrupt__, __auto_psv__)) _ADC1Interrupt(void) {
     IFS0bits.AD1IF = 0; 
     putVal(ADC1BUF0); 
